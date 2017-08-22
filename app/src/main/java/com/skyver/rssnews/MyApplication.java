@@ -32,10 +32,10 @@ public class MyApplication extends Application {
         //////////////////////Recovery FRAMEWORK
         Recovery.getInstance()
                 .debug(true)
-                .recoverInBackground(true)
+                .recoverInBackground(false)
                 .recoverStack(true)
                 .mainPage(MainActivity.class)
-                .recoverEnabled(true)
+                .recoverEnabled(false)
                 .callback(new RecoveryCallback() {
                     @Override
                     public void stackTrace(String s) {

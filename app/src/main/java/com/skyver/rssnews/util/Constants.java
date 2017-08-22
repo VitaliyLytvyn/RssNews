@@ -1,5 +1,9 @@
 package com.skyver.rssnews.util;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+
 /**
  * Created by skyver on 8/19/17.
  */
@@ -16,5 +20,22 @@ public class Constants {
 
     public static String makeFileName(String s){
         return IMAGE_PREFIX + s + IMAGE_POSTEFIX;
+    }
+
+    public static boolean isOnline(Context context) {
+        try {
+            ConnectivityManager connManager = (ConnectivityManager) context.getSystemService
+                    (Context.CONNECTIVITY_SERVICE);
+            NetworkInfo netInfo = connManager.getActiveNetworkInfo();
+            if (netInfo != null && netInfo
+                    .isAvailable() && netInfo.isConnectedOrConnecting()) {
+                return true;
+            }
+        } catch (Exception ex) {
+
+            ex.printStackTrace();
+            return false;
+        }
+        return false;
     }
 }

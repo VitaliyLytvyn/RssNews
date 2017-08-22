@@ -33,6 +33,19 @@ public class Article {
     @Element(name = "pubDate")
     private String pubDate;
 
+    private String imageFile;
+
+
+    //Getters and setters
+
+    public String getImageFile() {
+        return imageFile;
+    }
+
+    public void setImageFile(String imageFile) {
+        this.imageFile = imageFile;
+    }
+
     public String getGuid() {
         return guid;
     }
@@ -40,7 +53,6 @@ public class Article {
     public void setGuid(String guid) {
         this.guid = guid;
     }
-
 
     public String getTitle() {
         return title;

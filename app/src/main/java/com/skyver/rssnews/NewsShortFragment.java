@@ -23,6 +23,7 @@ import com.skyver.rssnews.viewmodel.MyViewModel;
 import com.skyver.rssnews.viewmodel.MyViewModelFactory;
 import com.squareup.picasso.Picasso;
 
+import java.io.File;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -164,20 +165,20 @@ public class NewsShortFragment extends LifecycleFragment {
             holder.description.setText(Html.fromHtml(item.getFulltext()));
             holder.time.setText(item.getPubDate());
 
-//            ContextWrapper cw = new ContextWrapper(getActivity().getApplicationContext());
-//            File directory = cw.getDir(Constants.IMAGE_DIRCTORY, Context.MODE_PRIVATE);
-//            File myImageFile = new File(directory, Constants.makeFileName(item.getGuid()));
-//            Picasso.with(getActivity()).load(myImageFile).into(holder.picture);
+            String imageUrl = item.getImageFile();
 
-            //////////////////// TODO CHECK - OLD
-            String row = item.getImage();
-            String url = row.substring(row.indexOf("http"), row.lastIndexOf("\"")) ;
-            Picasso.with(context)
-                    .load(url)
-                    .fit()
-                    .centerCrop()
-                    .into(holder.picture);
-            ////////////////////
+            if(imageUrl != null){//load from file
+                Picasso.with(getActivity()).load(new File(imageUrl)).into(holder.picture);
+            } else {//load from url
+
+                String row = item.getImage();
+                String url = row.substring(row.indexOf("http"), row.lastIndexOf("\""));
+                Picasso.with(context)
+                        .load(url)
+                        .fit()
+                        .centerCrop()
+                        .into(holder.picture);
+            }
 
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -187,7 +188,6 @@ public class NewsShortFragment extends LifecycleFragment {
                     selectedPos = holder.getAdapterPosition();
 
                     notifyItemChanged(selectedPos);
-
                     showDetails(selectedPos);
 
                 }

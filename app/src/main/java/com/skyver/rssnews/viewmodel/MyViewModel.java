@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 
 import com.skyver.rssnews.database.RssDAO;
 import com.skyver.rssnews.retrofit.Article;
@@ -30,8 +31,6 @@ import retrofit2.Retrofit;
 import timber.log.Timber;
 
 import static com.skyver.rssnews.util.Constants.IMAGE_DIRCTORY;
-import static com.skyver.rssnews.util.Constants.IMAGE_POSTEFIX;
-import static com.skyver.rssnews.util.Constants.IMAGE_PREFIX;
 
 /**
  * Created by skyver on 8/19/17.
@@ -42,6 +41,7 @@ public class MyViewModel extends ViewModel {
     private MutableLiveData<RSSMain> mRssMain;
     public LiveData<List<Article>> mArticleList;
 
+    private List<Article> mArticleListRow;
     private Call<RSSMain> call;
     private Application application;
     private Retrofit retrofit;
@@ -74,12 +74,8 @@ public class MyViewModel extends ViewModel {
             mArticleList = new MutableLiveData<>();
         }
 
-        mArticleList = rssDAO.getArticles();
+        mArticleList = rssDAO.getArticleListLive();
         return mArticleList;
-    }
-
-    public LiveData<Article> getArticleByLinc(final String link) {
-        return rssDAO.getArticleById(link);
     }
 
     public void start(){
@@ -99,17 +95,10 @@ public class MyViewModel extends ViewModel {
                 if (response.isSuccessful()) {
                     final RSSMain rssResponce = response.body();
                     if(rssResponce != null){
+                        mArticleListRow = rssResponce.getArticleList();
 
-                        //////////////////TODO CHECK
-                        executor.execute(new Runnable() {
-                            @Override
-                            public void run() {
-
-                                Long[] res = rssDAO.insertAllArticles(rssResponce.getArticleList());
-
-                            }
-                        });
-                        //////////////////
+                        // Insert in DataBase
+                        new DatabaseAsyncInsertAll().execute();
                     }
 
                     Timber.d("response.body(): "+ response.body());
@@ -130,6 +119,16 @@ public class MyViewModel extends ViewModel {
     }
 
     public void deleteAll(){
+        List<Article> art = mArticleList.getValue();
+        if(art != null){
+            for(Article article : art){
+                String imgFile = article.getImageFile();
+                if(imgFile != null){
+                    File file = new File(imgFile);
+                    boolean b = file.delete();
+                }
+            }
+        }
         executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -143,19 +142,21 @@ public class MyViewModel extends ViewModel {
 
     }
 
-    private void loadImage(final Article article){
-        String row = article.getImage();
-        String url = row.substring(row.indexOf("http"), row.lastIndexOf("\""));
-        article.setImage(url);
-        String fileName = Constants.makeFileName(article.getGuid());
+    private void loadImages(){
 
-        Picasso.with(application).load(url).into(picassoImageTarget(application, IMAGE_DIRCTORY, fileName,  article));
+        for(Article article : mArticleListRow){
+            String row = article.getImage();
+            String url = row.substring(row.indexOf("http"), row.lastIndexOf("\""));
+            article.setImage(url);
+            String fileName = Constants.makeFileName(article.getGuid());
 
-
+            Picasso.with(application).load(url)
+                    .into(picassoImageTarget(application, IMAGE_DIRCTORY, fileName,  article));
+        }
     }
 
     private Target picassoImageTarget(Context context, final String imageDir, final String imageName, final Article article) {
-        Timber.d("picassoImageTarget", " picassoImageTarget");
+
         ContextWrapper cw = new ContextWrapper(context);
         final File directory = cw.getDir(imageDir, Context.MODE_PRIVATE); // path to /data/data/yourapp/app_imageDir
         return new Target() {
@@ -170,6 +171,9 @@ public class MyViewModel extends ViewModel {
                             fos = new FileOutputStream(myImageFile);
                             bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
 
+                            rssDAO.updateArticleImage(article.getGuid(), myImageFile.toString());
+
+
                         } catch (IOException e) {
                             e.printStackTrace();
                         } finally {
@@ -181,7 +185,6 @@ public class MyViewModel extends ViewModel {
                                 e.printStackTrace();
                             }
                         }
-                        Timber.i("image", "image saved to >>>" + myImageFile.getAbsolutePath());
 
                     }
                 }).start();
@@ -202,6 +205,30 @@ public class MyViewModel extends ViewModel {
         if(call != null && !call.isCanceled()){
             call.cancel();
             call = null;
+        }
+    }
+
+    private class DatabaseAsyncInsertAll extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            //Perform pre-adding operation here.
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            Long[] res = rssDAO.insertAllArticles(mArticleListRow);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+            //load images in file system and store file path in database
+            loadImages();
         }
     }
 

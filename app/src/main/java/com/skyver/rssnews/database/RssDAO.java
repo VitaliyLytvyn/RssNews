@@ -18,12 +18,13 @@ import java.util.List;
 @Dao
 public interface RssDAO {
     @Query("SELECT * FROM Article")
-    LiveData<List<Article>> getArticles();
+    LiveData<List<Article>> getArticleListLive();
+
+    @Query("SELECT * FROM Article")
+    List<Article> getArticles();
 
     @Query("SELECT * FROM Article where link = :link")
     LiveData<Article> getArticleById(String link);
-
-
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertArticle(Article article);
@@ -31,7 +32,9 @@ public interface RssDAO {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     Long [] insertAllArticles(List<Article> articles);
 
-
     @Query("DELETE FROM Article")
     void deleteAllArticles();
+
+    @Query("UPDATE Article SET imageFile = :file  WHERE guid = :id")
+    int updateArticleImage(String id, String file);
 }

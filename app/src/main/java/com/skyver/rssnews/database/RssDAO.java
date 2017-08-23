@@ -17,10 +17,10 @@ import java.util.List;
 
 @Dao
 public interface RssDAO {
-    @Query("SELECT * FROM Article")
+    @Query("SELECT * FROM Article ORDER BY guid DESC")
     LiveData<List<Article>> getArticleListLive();
 
-    @Query("SELECT * FROM Article")
+    @Query("SELECT * FROM Article ORDER BY guid DESC")
     List<Article> getArticles();
 
     @Query("SELECT * FROM Article where link = :link")

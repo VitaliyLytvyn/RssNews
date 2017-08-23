@@ -6,6 +6,7 @@ import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentTransaction;
@@ -30,24 +31,22 @@ import javax.inject.Inject;
 
 import timber.log.Timber;
 
+import static android.content.Context.MODE_PRIVATE;
 
 
 public class NewsShortFragment extends LifecycleFragment {
 
     private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+
+    public static final String SHARE_PREF_NAME = "shpref";
+    public static final String SHARE_PREF_POSITION = "position";
 
     private String mParam1;
-    private String mParam2;
-
-    boolean mDualPane;
-    int mCurCheckPosition = 0;
-
     private MyViewModel model;
     private List<Article> mArticleList;
-
     private RecyclerView recyclerView;
-
+    private boolean mDualPane;
+    private int mCurCheckPosition = 0;
 
     @Inject
     MyViewModelFactory myViewModelFactory;
@@ -76,7 +75,6 @@ public class NewsShortFragment extends LifecycleFragment {
 
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
         }
     }
 
@@ -89,6 +87,9 @@ public class NewsShortFragment extends LifecycleFragment {
 
         if (savedInstanceState != null) {
             mCurCheckPosition = savedInstanceState.getInt("curChoice", 0);
+        } else {
+            SharedPreferences sp = getActivity().getApplication().getSharedPreferences(SHARE_PREF_NAME, MODE_PRIVATE);
+            mCurCheckPosition = sp.getInt(SHARE_PREF_POSITION, 0);
         }
 
         if (mDualPane) {
@@ -98,7 +99,7 @@ public class NewsShortFragment extends LifecycleFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+                             final Bundle savedInstanceState) {
         recyclerView = (RecyclerView) inflater.inflate(R.layout.recycler_view, container, false);
 
         model.getNewsFromDB().observe(this, new Observer<List<Article>>() {
@@ -118,6 +119,10 @@ public class NewsShortFragment extends LifecycleFragment {
                 recyclerView.setItemViewCacheSize(20);
                 recyclerView.setDrawingCacheEnabled(true);
                 recyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+
+                //Scroll to position
+                LinearLayoutManager lm = (LinearLayoutManager) recyclerView.getLayoutManager();
+                lm.scrollToPositionWithOffset(mCurCheckPosition, 0);
 
             }
         });
@@ -141,7 +146,7 @@ public class NewsShortFragment extends LifecycleFragment {
         }
     }
 
-     class ContentAdapter extends RecyclerView.Adapter<ViewHolder> {
+     private class ContentAdapter extends RecyclerView.Adapter<ViewHolder> {
 
         private List<Article> articleList;
         private  Context context;
@@ -150,6 +155,7 @@ public class NewsShortFragment extends LifecycleFragment {
         public ContentAdapter( List<Article> articleList, Context context) {
              this.articleList  = articleList;
              this.context  = context;
+
         }
 
         @Override
@@ -171,8 +177,10 @@ public class NewsShortFragment extends LifecycleFragment {
                 Picasso.with(getActivity()).load(new File(imageUrl)).into(holder.picture);
             } else {//load from url
 
-                String row = item.getImage();
-                String url = row.substring(row.indexOf("http"), row.lastIndexOf("\""));
+                String url = item.getImage();
+                if(!url.startsWith("http")){
+                    url = url.substring(url.indexOf("http"), url.lastIndexOf("\""));
+                }
                 Picasso.with(context)
                         .load(url)
                         .fit()
@@ -204,6 +212,11 @@ public class NewsShortFragment extends LifecycleFragment {
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt("curChoice", mCurCheckPosition);
+        SharedPreferences  sp=getActivity().getApplication().getSharedPreferences(SHARE_PREF_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor edit=sp.edit();
+        edit.putInt(SHARE_PREF_POSITION, mCurCheckPosition);
+        edit.commit();
+
     }
 
     void showDetails(int index) {
@@ -220,9 +233,12 @@ public class NewsShortFragment extends LifecycleFragment {
                 // Execute a transaction, replacing any existing fragment
                 // with this one inside the frame.
                 FragmentTransaction ft = getFragmentManager().beginTransaction();
-                if (index == 0) {
-                    ft.replace(R.id.details, details);
-                }
+
+                //TODO CHECK
+//                if (index == 0) {
+//                    ft.replace(R.id.details, details);
+//                }
+                ft.replace(R.id.details, details);
 
                 ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
                 ft.commit();

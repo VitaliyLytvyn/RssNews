@@ -13,7 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
-import android.view.MenuItem;;
+import android.view.MenuItem;
 import com.skyver.rssnews.viewmodel.MyViewModel;
 import com.skyver.rssnews.viewmodel.MyViewModelFactory;
 import javax.inject.Inject;
@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleRegistry
         int id = item.getItemId();
 
         if (id == R.id.action_bar_refresh) {
-            myViewModel.loadNews();
+            myViewModel.reloadNews();
             return true;
         } if (id == R.id.action_bar_delete) {
             myViewModel.deleteAll();

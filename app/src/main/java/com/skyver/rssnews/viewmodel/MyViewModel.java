@@ -6,6 +6,7 @@ import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -30,6 +31,8 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import timber.log.Timber;
 
+import static android.content.Context.MODE_PRIVATE;
+import static com.skyver.rssnews.NewsShortFragment.SHARE_PREF_NAME;
 import static com.skyver.rssnews.util.Constants.IMAGE_DIRCTORY;
 
 /**
@@ -82,6 +85,10 @@ public class MyViewModel extends ViewModel {
         loadNews();
     }
 
+    public void reloadNews() {
+        clearSavedPosition();
+        loadNews();
+    }
     public void loadNews() {
 
         //Create a retrofit call object
@@ -119,6 +126,7 @@ public class MyViewModel extends ViewModel {
     }
 
     public void deleteAll(){
+        clearSavedPosition();
         List<Article> art = mArticleList.getValue();
         if(art != null){
             for(Article article : art){
@@ -140,6 +148,11 @@ public class MyViewModel extends ViewModel {
         article.setFulltext("");
         selected.setValue(article);
 
+    }
+
+    private void clearSavedPosition() {
+        SharedPreferences sp = application.getSharedPreferences(SHARE_PREF_NAME, MODE_PRIVATE);
+        sp.edit().clear().commit();
     }
 
     private void loadImages(){

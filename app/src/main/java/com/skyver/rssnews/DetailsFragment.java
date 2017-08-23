@@ -67,6 +67,7 @@ public class DetailsFragment extends LifecycleFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
+
         if (container == null) {
             return null;
         }
@@ -105,10 +106,7 @@ public class DetailsFragment extends LifecycleFragment {
     }
 
     private void fillViewWithContent(Article article){
-        mTextView.setMovementMethod(LinkMovementMethod.getInstance());
-        String s = article.getFulltext();
-
-        mTextView.setText(Html.fromHtml(s));
+        mTextView.setText(Html.fromHtml(article.getFulltext()));
     }
 
     @Override
@@ -132,7 +130,6 @@ public class DetailsFragment extends LifecycleFragment {
                         mArticle = article;
                         fillViewWithContent(article);
                     }
-
                 }
             });
 
